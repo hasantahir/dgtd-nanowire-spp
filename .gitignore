@@ -1,0 +1,34 @@
+# simulation output
+out_*/
+validate_out/
+frames/
+frames_ho/
+*.npz
+*.msh
+*.mp4
+*.png
+!docs/*.png
+
+# logs
+dgtd_*.log
+*.out
+*.err
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# environments
+.venv/
+venv/
+.conda/
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store

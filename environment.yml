@@ -1,0 +1,21 @@
+# conda env for the DGTD nanowire SPP solver
+#   conda env create -f environment.yml
+#   conda activate dgtd
+#
+# NOTE on CUDA: installing `cuda-version` + `cupy` from conda-forge pulls a
+# matching CUDA runtime INTO the env, so you usually do NOT need a `module
+# load cuda` on the cluster. Set cuda-version to match your driver
+# (`nvidia-smi` top-right shows the max CUDA version the driver supports).
+name: dgtd
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - scipy
+  - matplotlib
+  - gmsh              # provides the python gmsh module
+  - python-gmsh
+  - cuda-version=12.2 # <-- match your driver; 11.8 also fine if older
+  - cupy
+  - pip

@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "DGTD Nanowire SPP"
+abstract: >-
+  High-order nodal discontinuous Galerkin time-domain solver for Maxwell's
+  equations with Drude dispersive media, for electron-beam excitation of
+  surface plasmon polaritons on metallic nanowires.
+authors:
+  - family-names: Abbas
+    given-names: Hasan
+version: 0.1.0
+license: MIT
+references:
+  - type: article
+    title: "Time-domain study of surface plasmon polariton propagation in silver nanowires"
+    authors:
+      - family-names: Zhao
+        given-names: Wenhua
+    journal: "Physical Review B"
+    volume: 113
+    start: 085425
+    year: 2026
+    doi: 10.1103/gpqj-4v29

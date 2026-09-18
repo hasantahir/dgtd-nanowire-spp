@@ -35,13 +35,13 @@ python -c "import cupy; print('cupy', cupy.__version__, cupy.cuda.runtime.getDev
 SCRATCH=${SLURM_SUBMIT_DIR}/out_${SLURM_JOB_ID}
 mkdir -p "$SCRATCH"
 
-srun python ho_solver_gpu.py paper_mesh.msh \
+srun python -m dgtd.solver paper_mesh.msh \
      --total-fs 25.0 \
      --outdir "$SCRATCH" \
      --snap-fs 0.25 \
      --cfl 0.3
 
 # post-process on the same node (CPU work, cheap)
-python postprocess.py "$SCRATCH"
+python -m dgtd.postprocess "$SCRATCH"
 
 echo "results in $SCRATCH"

@@ -36,13 +36,13 @@ PY
   echo "outdir    : $OUT"
   echo "----------------------------------------"
 
-  python ho_solver_gpu.py "$MESH" \
+  python -m dgtd.solver "$MESH" \
       --total-fs "$TOTAL_FS" \
       --outdir   "$OUT" \
       --snap-fs  "$SNAP_FS" \
       --cfl      "$CFL"
 
   echo "--- post-processing ---"
-  python postprocess.py "$OUT"
+  python -m dgtd.postprocess "$OUT"
   echo "results in $OUT"
 } 2>&1 | tee "$LOG"

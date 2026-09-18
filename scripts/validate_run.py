@@ -51,11 +51,25 @@ def check(outdir, t_center_fs=2.0):
     else:
         bad("NaN/Inf present in the recorded field")
 
-    # 2 bounded
-    if amp.max() > 0 and amp.max() < 1e6 * max(amp[amp > 0].min(), 1e-30):
-        good(f"field bounded (max |Ez| = {amp.max():.3e})")
+    # 2 bounded -- test for EXPONENTIAL GROWTH, not dynamic range.
+    # A correct run legitimately spans ~10 orders (it starts near machine zero
+    # before the electron arrives), so comparing peak to global minimum is
+    # meaningless. Blow-up instead shows the envelope still RISING at the end.
+    if amp.max() <= 0:
+        bad("field is identically zero - nothing was excited")
     else:
-        bad(f"field spans too many orders ({amp.max():.3e}) - possible blow-up")
+        m = len(amp)
+        q = max(2, m//5)
+        late, prev = amp[-q:].mean(), amp[-2*q:-q].mean()
+        rising = late > 1.5*max(prev, 1e-30)
+        peak_at_end = int(np.argmax(amp)) >= m - q
+        if rising and peak_at_end:
+            bad(f"envelope still rising at the end of the run "
+                f"({prev:.3e} -> {late:.3e}, peak in the final fifth) "
+                "- exponential blow-up")
+        else:
+            good(f"field bounded: peak {amp.max():.3e}, "
+                 f"end-of-run mean {late:.3e} ({late/amp.max():.3f} x peak)")
 
     # 3 peak near closest approach
     i_pk = int(np.argmax(amp)); t_pk = t[i_pk]

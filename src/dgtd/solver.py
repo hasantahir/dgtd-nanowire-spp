@@ -51,50 +51,48 @@ EPS_SUB    = 4.0   # Si3N4 Substrate permittivity (n ~ 2.0)
 
 # ---------------------------------------------------------------- mesh input
 def read_tets(path):
-    """Nodes, tets, and element-wise masks for metal and substrate."""
+    """Nodes (um->nm), tets, and ELEMENT-WISE metal mask from 'silver' group."""
     import gmsh
     gmsh.initialize()
     gmsh.open(path)
 
-    node_tags, node_coords, _ = gmsh.model.mesh.getNodes()
+    # Robust unpacking for newer gmsh API versions
+    nodes_data = gmsh.model.mesh.getNodes()
+    node_tags, node_coords = nodes_data[0], nodes_data[1]
     node_coords = node_coords.reshape(-1, 3) * 1000.0
     tag2idx = {int(t): i for i, t in enumerate(node_tags)}
 
-    etypes, etags_list, enodes = gmsh.model.mesh.getElements(dim=3)
+    elems_data = gmsh.model.mesh.getElements(dim=3)
+    etypes, etags_list, enodes = elems_data[0], elems_data[1], elems_data[2]
     ti = list(etypes).index(4)
     EToV = np.vectorize(tag2idx.get)(enodes[ti].reshape(-1, 4)).astype(np.int64)
     tag2row = {int(t): i for i, t in enumerate(etags_list[ti])}
 
     metal = np.zeros(len(EToV), dtype=bool)
-    substrate = np.zeros(len(EToV), dtype=bool)
-    
+    found = False
     for (dim, ptag) in gmsh.model.getPhysicalGroups(3):
-        name = gmsh.model.getPhysicalName(dim, ptag).lower()
-        is_metal = "silver" in name
-        is_sub = "substrate" in name
-        
-        for ent in gmsh.model.getEntitiesForPhysicalGroup(dim, ptag):
-            et, etg, _ = gmsh.model.mesh.getElements(dim, int(ent))
-            for tt, tags in zip(et, etg):
-                if int(tt) == 4:
-                    for tg in tags:
-                        r = tag2row.get(int(tg))
-                        if r is not None:
-                            if is_metal: metal[r] = True
-                            if is_sub: substrate[r] = True
-                            
+        if gmsh.model.getPhysicalName(dim, ptag) == "silver" or ptag == 1:
+            found = True
+            for ent in gmsh.model.getEntitiesForPhysicalGroup(dim, ptag):
+                ent_data = gmsh.model.mesh.getElements(dim, int(ent))
+                et, etg = ent_data[0], ent_data[1]
+                for tt, tags in zip(et, etg):
+                    if int(tt) == 4:
+                        for tg in tags:
+                            r = tag2row.get(int(tg))
+                            if r is not None:
+                                metal[r] = True
     gmsh.finalize()
-    
-    # Fallback if physical groups are missing
-    if not metal.any():
-        print("WARNING: no 'silver' physical group; using centroid bounding box.")
+
+    if not found:
+        print("WARNING: no 'silver' physical group; falling back to centroid test")
         c = node_coords[EToV].mean(axis=1)
         r2 = c[:,1]**2 + c[:,2]**2
         metal = (((np.abs(c[:,0]) <= L_WIRE/2) & (r2 <= R_WIRE**2))
                  | (((c[:,0]+L_WIRE/2)**2 + r2) <= R_WIRE**2)
                  | (((c[:,0]-L_WIRE/2)**2 + r2) <= R_WIRE**2))
+    return node_coords, EToV, metal
 
-    return node_coords, EToV, metal, substrate
 
 def build_nodes_highorder(VX, EToV, ref):
     r, s, t = ref['r'], ref['s'], ref['t']
